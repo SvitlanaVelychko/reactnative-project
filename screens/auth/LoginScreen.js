@@ -16,7 +16,7 @@ const initialState = {
     password: "",
 };
 
-export default function RegistrationScreen () {
+export default function RegistrationScreen ({navigation}) {
     const [isShowKeyboard, setIsShowKeyboard] = useState(false);
     const [isPasswordHidden, setIsPasswordHidden] = useState(true);
     const [user, setUser] = useState(initialState);
@@ -34,7 +34,7 @@ export default function RegistrationScreen () {
 
     return (
         <ImageBackground
-            source={require("../assets/images/bg.jpg")}
+            source={require("../../assets/images/bg.jpg")}
             style={styles.image}>
             <View style={styles.formContainer}>
                 <Text style={styles.pageTitle}>Ввійти</Text>
@@ -77,7 +77,9 @@ export default function RegistrationScreen () {
                                 style={styles.passwordLink}
                                 onPress={onShowPassword}
                             >
-                                <Text>{isPasswordHidden ? "Показати" : "Приховати"}</Text>
+                                <Text style={styles.passwordLinkText}>
+                                    {isPasswordHidden ? "Показати" : "Приховати"}
+                                </Text>
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity
@@ -87,9 +89,15 @@ export default function RegistrationScreen () {
                         >
                             <Text style={styles.btnTitle}>Ввійти</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity activeOpacity={0.8} style={styles.link}>
-                            <Text style={styles.linkText}>Нема аккаунта? Зареєструватись</Text>
-                        </TouchableOpacity>
+                        <View style={styles.linkWrapper}>
+                            <Text style={styles.linkText}>Відсутній аккаунт? </Text>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate("Registration")}
+                                activeOpacity={0.8}
+                                style={styles.link}>
+                                <Text style={styles.linkText}>Зареєструватись</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </KeyboardAvoidingView>
             </View>
@@ -139,6 +147,8 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 16,
         top: 16,
+    },
+    passwordLinkText: {
         fontFamily: "Roboto-Regular",
         fontSize: 16,
         color: "#1B4371",
@@ -155,6 +165,10 @@ const styles = StyleSheet.create({
         fontFamily: "Roboto-Regular",
         fontSize: 16,
         color: "#FFFFFF",
+    },
+    linkWrapper: {
+        flexDirection: "row",
+        justifyContent: "center",
     },
     link: {
         alignItems: "center",

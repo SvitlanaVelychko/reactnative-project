@@ -18,7 +18,7 @@ const initialState = {
     password: "",
 };
 
-export default function RegistrationScreen () {
+export default function RegistrationScreen ({navigation}) {
     const [isShowKeyboard, setIsShowKeyboard] = useState(false);
     const [isPasswordHidden, setIsPasswordHidden] = useState(true);
     const [user, setUser] = useState(initialState);
@@ -36,12 +36,12 @@ export default function RegistrationScreen () {
 
     return (
         <ImageBackground
-            source={require("../assets/images/bg.jpg")}
+            source={require("../../assets/images/bg.jpg")}
             style={styles.image}>
             <View style={styles.formContainer}>
                 <View style={styles.userAvatar}>
                     <TouchableOpacity activeOpacity={0.8} style={styles.addBtn}>
-                        <Image source={require("../assets/images/add.png")}/>
+                        <Image source={require("../../assets/images/add.png")} />
                     </TouchableOpacity>
                 </View>
                 <Text style={styles.pageTitle}>Реєстрація</Text>
@@ -99,7 +99,9 @@ export default function RegistrationScreen () {
                                 style={styles.passwordLink}
                                 onPress={onShowPassword}
                             >
-                                <Text>{isPasswordHidden ? "Показати" : "Приховати"}</Text>
+                                <Text style={styles.passwordLinkText}>
+                                    {isPasswordHidden ? "Показати" : "Приховати"}
+                                </Text>
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity
@@ -109,14 +111,21 @@ export default function RegistrationScreen () {
                         >
                             <Text style={styles.btnTitle}>Зареєструватися</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity activeOpacity={0.8} style={styles.link}>
-                            <Text style={styles.linkText}>Вже є аккаунт? Ввійти</Text>
-                        </TouchableOpacity>
+                        <View style={styles.linkWrapper}>
+                            <Text style={styles.linkText}>Вже є аккаунт? </Text>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate("Login")}
+                                activeOpacity={0.8}
+                                style={styles.link}
+                            >
+                                <Text style={styles.linkText}>Ввійти</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </KeyboardAvoidingView>
             </View>
         </ImageBackground>
-    );
+    ); 
 };
 
 const styles = StyleSheet.create({
@@ -175,6 +184,8 @@ const styles = StyleSheet.create({
         position: "absolute",
         right: 16,
         top: 16,
+    },
+    passwordLinkText: {
         fontFamily: "Roboto-Regular",
         fontSize: 16,
         color: "#1B4371",
@@ -191,6 +202,10 @@ const styles = StyleSheet.create({
         fontFamily: "Roboto-Regular",
         fontSize: 16,
         color: "#FFFFFF",
+    },
+    linkWrapper: {
+        flexDirection: "row",
+        justifyContent: "center",
     },
     link: {
         alignItems: "center",
