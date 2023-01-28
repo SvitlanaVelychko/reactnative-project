@@ -31,16 +31,7 @@ export default function Home() {
                             />
                         </View>
                     ),
-                    headerTitle: "Публікації",
-                    headerRight: () => (
-                        <TouchableOpacity style={{ marginRight: 16 }}>
-                            <Feather
-                                name="log-out"
-                                size={24}
-                                color="#BDBDBD"
-                            />
-                        </TouchableOpacity>
-                    ),
+                    headerShown: false,
                 }}
             />
             <MainTab.Screen
@@ -59,12 +50,13 @@ export default function Home() {
                             />
                         </View>
                     ),
+                    tabBarStyle: { display: "none" },
                     headerTitle: "Створити публікацію",
                     headerLeft: () => (
                         <TouchableOpacity
                             activeOpacity={0.8}
                             style={{ marginLeft: 16 }}
-                            onPress={() => navigation.navigate("Posts")}
+                            onPress={() => navigation.navigate("DefaultScreen")}
                         >
                             <Feather
                                 name="arrow-left"

@@ -1,55 +1,63 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { Feather } from "@expo/vector-icons";
+import DefaultScreenPosts from "../nestedScreens/DefaultScreenPosts";
+import CommentsScreen from "../nestedScreens/CommentsScreen";
+import MapScreen from "../nestedScreens/MapScreen";
 
-export default function PostsScreen() {
+const NestedStack = createStackNavigator();
+
+export default function PostsScreen({navigation}) {
     return (
-        <View style={styles.container}>
-            <View style={styles.userWrapper}>
-                <View style={styles.userAvatar}>
-                </View>
-                <View style={styles.userInfo}>
-                    <Text style={styles.userNameText}>Name</Text>
-                    <Text style={styles.userEmailText}>Email</Text>
-                </View>
-            </View>
-        </View>
+        <NestedStack.Navigator screenOptions={styles.headerBar}>
+            <NestedStack.Screen
+                options={{
+                    headerTitle: "Публікації",
+                    headerRight: () => (
+                        <TouchableOpacity style={{ marginRight: 16 }}>
+                            <Feather
+                                name="log-out"
+                                size={24}
+                                color="#BDBDBD"
+                            />
+                        </TouchableOpacity>
+                    ),
+                }}
+                name="DefaultScreen"
+                component={DefaultScreenPosts}
+            />
+            <NestedStack.Screen
+                options={{
+                    headerTitle: "Коментарі",
+                }}
+                name="Comments"
+                component={CommentsScreen}
+            />
+            <NestedStack.Screen
+                options={{
+                    headerTitle: "Мапа",
+                }}
+                name="Map"
+                component={MapScreen}
+            />
+        </NestedStack.Navigator>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#FFFFFF",
-        paddingLeft: 16,
-        paddingRight: 16,
-        paddingTop: 32,
-    },
-    userWrapper: {
-        flexDirection: "row",
-        justifyContent: "flex-start",
-        alignItems: "center",
-    },
-    userAvatar: {
-        width: 60,
-        height: 60,
-        backgroundColor: "#F6F6F6",
-        borderRadius: 16,
-    },
-    userInfo: {
-        flexDirection: "column",
-        marginLeft: 8,
-        justifyContent: "center",
-    },
-    userNameText: {
-        fontFamily: "Roboto-Bold",
-        fontSize: 13,
-        lineHeight: 15,
-        color: "#212121",
-    },
-    userEmailText: {
-        fontFamily: "Roboto-Regular",
-        fontSize: 11,
-        lineHeight: 13,
-        color: "rgba(33, 33, 33, 0.8)",
+    headerBar: {
+        headerTitleAlign: "center",
+        headerStyle: {
+            backgroundColor: "#FFFFFF",
+            borderBottomWidth: 0.5,
+            borderBottomColor: "rgba(0, 0, 0, 0.3)",
+        },
+        headerTitleStyle: {
+            fontFamily: "Roboto-Medium",
+            fontSize: 17,
+            lineHeight: 22,
+            color: "#212121",
+        },
     },
 });
