@@ -1,16 +1,9 @@
 import { useCallback } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from "expo-splash-screen";
-import { NavigationContainer } from "@react-navigation/native";
-import {
-  Keyboard,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
-import useRoute from './router';
-
-SplashScreen.preventAutoHideAsync();
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
+import Main from './components/Main';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -29,21 +22,9 @@ export default function App() {
     return null;
   }
 
-  const routing = useRoute({});
-
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View style={styles.container} onLayout={onLayoutRootView}>
-        <NavigationContainer>
-          {routing}
-        </NavigationContainer>
-      </View>
-    </TouchableWithoutFeedback>
+    <Provider store={store}>
+      <Main onLayout={onLayoutRootView} />
+    </Provider>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

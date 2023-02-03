@@ -65,7 +65,7 @@ export default function CreatePostsScreen({ navigation }) {
         Keyboard.dismiss();
         navigation.navigate('DefaultScreen', { photo, location, locationName, photoTitle });
     };
-
+    
     const reset = () => {
         setPhoto("");
         setPhotoTitle("");

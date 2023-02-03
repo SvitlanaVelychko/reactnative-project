@@ -8,8 +8,12 @@ import {
     Text,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useDispatch } from "react-redux";
+import { authSignOutUser } from "../../redux/auth/authOperations";
 
 export default function ProfileScreen() {
+    const dispatch = useDispatch();
+
     return (
         <View style={styles.container}>
             <ImageBackground
@@ -22,7 +26,10 @@ export default function ProfileScreen() {
                         <Image source={require("../../assets/images/add.png")} />
                     </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.userLogout}>
+                    <TouchableOpacity
+                        style={styles.userLogout}
+                        onPress={() => dispatch(authSignOutUser())}
+                    >
                             <Feather
                                 name="log-out"
                                 size={24}

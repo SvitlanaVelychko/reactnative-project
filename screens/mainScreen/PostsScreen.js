@@ -5,17 +5,24 @@ import { Feather } from "@expo/vector-icons";
 import DefaultScreenPosts from "../nestedScreens/DefaultScreenPosts";
 import CommentsScreen from "../nestedScreens/CommentsScreen";
 import MapScreen from "../nestedScreens/MapScreen";
+import { authSignOutUser } from "../../redux/auth/authOperations";
+import { useDispatch } from "react-redux";
 
 const NestedStack = createStackNavigator();
 
-export default function PostsScreen({navigation}) {
+export default function PostsScreen({ navigation }) {
+    const dispatch = useDispatch();
+
     return (
         <NestedStack.Navigator screenOptions={styles.headerBar}>
             <NestedStack.Screen
                 options={{
                     headerTitle: "Публікації",
                     headerRight: () => (
-                        <TouchableOpacity style={{ marginRight: 16 }}>
+                        <TouchableOpacity
+                            style={{ marginRight: 16 }}
+                            onPress={() => dispatch(authSignOutUser())}
+                        >
                             <Feather
                                 name="log-out"
                                 size={24}
