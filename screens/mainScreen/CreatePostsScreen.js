@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Feather } from "@expo/vector-icons";
 import {
     TouchableWithoutFeedback,
@@ -13,6 +14,11 @@ import {
 } from "react-native";
 import { Camera } from "expo-camera";
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
+
+import { storage, db } from '../../firebase/confige';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { collection, addDoc } from "firebase/firestore"; 
 
 export default function CreatePostsScreen({ navigation }) {
     const [isShowKeyboard, setIsShowKeyboard] = useState(false);
@@ -21,12 +27,17 @@ export default function CreatePostsScreen({ navigation }) {
     const [photoTitle, setPhotoTitle] = useState("");
     const [location, setLocation] = useState("");
     const [locationName, setLocationName] = useState("");
+
+    const { userId, name, email, avatar } = useSelector((state) => state.auth);
     
     useEffect(() => {
         (async () => {
             const { status } = await Camera.requestCameraPermissionsAsync();
 
-            console.log(status);
+            if (status !== 'granted') {
+                setErrorMsg('Permission to access camera was denied');
+                return;
+            }
         })();
     },[]);
     
@@ -38,32 +49,80 @@ export default function CreatePostsScreen({ navigation }) {
                 setErrorMsg('Permission to access location was denied');
                 return;
             }
+
+            const location = await Location.getCurrentPositionAsync({});
+            setLocation(location);
         })();
     },[]);
     
     const takePhoto = async () => {
-        if (!camera) return;
         try {
-            const { status } = await Camera.getCameraPermissionsAsync();
-
-            if (status !== 'granted') {
-                setErrorMsg('Permission to access camera was denied');
-                return;
-            }
-
             const photo = await camera.takePictureAsync();
-            const location = await Location.getCurrentPositionAsync();
             setPhoto(photo.uri);
-            setLocation(location.coords);
         } catch (error) {
             console.log(error.message);
         };
     };
 
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+        
+        if (!result.canceled) {
+            setPhoto(result.assets[0].uri);
+        }
+    };
+
+    const uploadPhotoToServer = async () => {
+        try {
+            const res = await fetch(photo);
+            const file = await res.blob();
+
+            const uniquePostId = Date.now().toString();
+            const storageRef = ref(storage, `postImages/${uniquePostId}`);
+            await uploadBytes(storageRef, file);
+
+            const processedPhoto = await getDownloadURL(storageRef);
+            return processedPhoto;
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+    const uploadPostToServer = async () => {
+        try {
+            const photo = await uploadPhotoToServer();
+            
+            await addDoc(collection(db, "posts"), {
+                photo,
+                photoTitle,
+                location,
+                locationName,
+                userId,
+                name,
+                email,
+                avatar,
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
     const postPhoto = async () => {
-        setIsShowKeyboard(false);
-        Keyboard.dismiss();
-        navigation.navigate('DefaultScreen', { photo, location, locationName, photoTitle });
+        try {
+            setIsShowKeyboard(false);
+            Keyboard.dismiss();
+
+            await uploadPostToServer();
+            reset();
+            navigation.navigate('DefaultScreen');
+        } catch (error) {
+            console.log(error.message);
+        }
     };
     
     const reset = () => {
@@ -79,30 +138,33 @@ export default function CreatePostsScreen({ navigation }) {
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
                     <View style={{ ...styles.form, marginBottom: isShowKeyboard ? 80 : 20 }}>
                         <View style={styles.photoWrapper}>
-                            <Camera
-                                style={styles.camera}
-                                ref={setCamera}
-                            >
-                                {photo && (
-                                    <View style={styles.takePhotoWrapper}>
-                                        <Image
-                                            source={{ uri: photo }}
-                                            style={{ width: 360, height: 240, borderRadius: 8 }}
-                                        />
-                                    </View>
-                                )}
-                                <TouchableOpacity
-                                    style={styles.snapBtn}
-                                    onPress={takePhoto}
+                            {photo ? (
+                                <View style={styles.takePhotoWrapper}>
+                                    <Image
+                                        source={{ uri: photo }}
+                                        style={{ width: 360, height: 240, borderRadius: 8 }}
+                                    />
+                                </View>
+                            ) : (
+                                <Camera
+                                    style={styles.camera}
+                                    ref={(ref) => setCamera(ref)}
                                 >
-                                    <Feather name="camera" size={24} color={"#BDBDBD"} />
-                                </TouchableOpacity>
-                            </Camera>
+                                    <TouchableOpacity
+                                        style={styles.snapBtn}
+                                        onPress={takePhoto}
+                                    >
+                                        <Feather name="camera" size={24} color={"#BDBDBD"} />
+                                    </TouchableOpacity>
+                                </Camera>
+                            )}
                             <TouchableOpacity
                                 style={{ marginTop: 8 }}
                                 activeOpacity={0.8}
+                                onPress={pickImage}
                             >
-                                <Text style={styles.uploadPhotoText}>Завантажити фото</Text>
+                                <Text style={styles.uploadPhotoText}>
+                                    {photo ? "Редагувати фото" : "Завантажити фото"}</Text>
                             </TouchableOpacity>
                         </View>
                         <View>
@@ -111,7 +173,7 @@ export default function CreatePostsScreen({ navigation }) {
                                 placeholder={"Назва..."}
                                 placeholderTextColor={"#BDBDBD"}
                                 value={photoTitle}
-                                onChangeText={(value) => setPhotoTitle(value)}
+                                onChangeText={setPhotoTitle}
                                 onFocus={() => setIsShowKeyboard(true)}
                                 onBlur={() => setIsShowKeyboard(false)}
                             ></TextInput>
@@ -137,14 +199,14 @@ export default function CreatePostsScreen({ navigation }) {
                             style={{
                                 ...styles.postBtn,
                                 backgroundColor: (photo && photoTitle && locationName)
-                                ? "#FF6C00" : "#F6F6F6",
+                                    ? "#FF6C00" : "#F6F6F6",
                             }}
                             onPress={postPhoto}
                         >
                             <Text style={{
                                 ...styles.postBtnText,
                                 color: (photo && photoTitle && locationName)
-                                ? "#FFFFFF" : "#BDBDBD",
+                                    ? "#FFFFFF" : "#BDBDBD",
                             }}>Опублікувати</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.deleteBtn} onPress={reset}>
@@ -173,9 +235,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     takePhotoWrapper: {
-        position: "absolute",
-        top: 0,
-        left: 0,
+        position: "relative",
         backgroundColor: "#F6F6F6",
         borderWidth: 1,
         borderStyle: "solid",

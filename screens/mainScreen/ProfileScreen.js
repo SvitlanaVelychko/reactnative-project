@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     StyleSheet,
@@ -8,11 +8,14 @@ import {
     Text,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { authSignOutUser } from "../../redux/auth/authOperations";
 
 export default function ProfileScreen() {
+    const [userPosts, setUserPosts] = useState([]);
     const dispatch = useDispatch();
+
+    const { userId} = useSelector((state) => state.auth);
 
     return (
         <View style={styles.container}>

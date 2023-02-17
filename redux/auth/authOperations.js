@@ -10,7 +10,7 @@ import { authSlice } from "./authReducer";
 
 const { updateUserProfile, authStateChange, authSignOut } = authSlice.actions;
 
-export const authSignUpUser = ({ email, password, name }) => async (
+export const authSignUpUser = ({ name, email, password, avatar}) => async (
     dispatch,
     getState
 ) => {
@@ -18,14 +18,17 @@ export const authSignUpUser = ({ email, password, name }) => async (
         await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(auth.currentUser, {
             displayName: name,
+            photoURL: avatar,
         });
 
-        const { uid, displayName } = await auth.currentUser;
+        const { uid, displayName, photoURL } = await auth.currentUser;
 
         dispatch(
             updateUserProfile({ 
                 userId: uid,
                 name: displayName,
+                email, 
+                avatar: photoURL,
             }));
     } catch (error) {
         console.log(error.message);
@@ -39,22 +42,29 @@ export const authSignInUser = ({ email, password }) => async (
     } catch (error) {
         console.log(error.message);
     }
-    };
+};
 
 
 export const authSignOutUser = () => async (dispatch, getState) => { 
-    await signOut(auth);
+    try {
+        await signOut(auth);
 
-    dispatch(authSignOut());
+        dispatch(authSignOut());
+    } catch (error) {
+        console.log(error.message);
+    }
 };
 
 
 export const authStateChangeUser = () => async (dispatch, getState) => {
     await onAuthStateChanged(auth, (user) => {
         if (user) {
+            const { uid, displayName, email, photoURL } = user;
             const userUpdateProfile = {
-                userId: user.uid,
-                name: user.displayName,
+                userId: uid,
+                name: displayName,
+                email: email, 
+                avatar: photoURL,
             };
 
             dispatch(authStateChange({ stateChange: true }));

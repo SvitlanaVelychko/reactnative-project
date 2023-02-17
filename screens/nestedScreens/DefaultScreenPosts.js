@@ -9,30 +9,48 @@ import {
     TouchableOpacity,
 } from "react-native";
 
-export default function DefaultScreenPosts ({ route, navigation }) {
+import { db } from "../../firebase/confige";
+import { collection, onSnapshot } from "firebase/firestore";
+import { useSelector } from "react-redux";
+
+export default function DefaultScreenPosts ({ navigation }) {
     const [posts, setPosts] = useState([]);
 
+    const { name, email, avatar } = useSelector((state)=> state.auth);
+
     useEffect(() => {
-        if (route.params) {
-            setPosts(prevState => [...prevState, route.params])
+        getAllPosts();
+    }, []);
+
+    const getAllPosts = async () => {
+        try {
+            const postsRef = collection(db, "posts");
+
+            onSnapshot(postsRef, (data) => {
+                setPosts(data.docs.map((doc)=> ({ ...doc.data(), id: doc.id })));
+            });
+        } catch (error) {
+            console.log(error.message);
         }
-    }, [route.params])
+    };
+
 
     return (
         <View style={styles.container}>
             <View style={styles.userWrapper}>
                 <View style={styles.userAvatar}>
+                    <Image source={{ uri: avatar }} style={{ width: 60, height: 60, borderRadius: 16 }} />
                 </View>
                 <View style={styles.userInfo}>
-                    <Text style={styles.userNameText}>Name</Text>
-                    <Text style={styles.userEmailText}>Email</Text>
+                    <Text style={styles.userNameText}>{name}</Text>
+                    <Text style={styles.userEmailText}>{email}</Text>
                 </View>
             </View>
             <FlatList
                 data={posts}
-                keyExtractor={(item, indx) => indx.toString()}
+                keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <View style={{ marginTop: 32 }}>
+                    <View style={{ marginBottom: 32 }}>
                         <Image
                             source={{ uri: item.photo }}
                             style={{ width: "100%", height: 240, borderRadius: 8 }}
@@ -42,23 +60,20 @@ export default function DefaultScreenPosts ({ route, navigation }) {
                             <View style={styles.commentsWrapper}>
                                 <TouchableOpacity
                                     style={{ marginRight: 6 }}
-                                    onPress={()=> navigation.navigate("Comments", {photo: item.photo})}
+                                    onPress={() => navigation.navigate("Comments", { photo: item.photo, postId: item.id })}
                                 >
                                     <Feather name="message-circle" size={24} color={"#BDBDBD"} />
                                 </TouchableOpacity>
-                                <Text>{ item.comments || 0 }</Text>
+                                <Text>{item.comments || 0}</Text>
                             </View>
                             <View style={styles.locationWrapper}>
                                 <TouchableOpacity
                                     style={{ marginRight: 4 }}
-                                        onPress={() => navigation.navigate("Map", {
-                                            location: item.location,
-                                            title: item.locationName,
-                                    })}
+                                    onPress={() => navigation.navigate("Map", { location: item.location })}
                                 >
                                     <Feather name="map-pin" size={24} color={"#BDBDBD"} />
                                 </TouchableOpacity>
-                                <Text style={styles.locationNameText}>{ item.locationName }</Text>
+                                <Text style={styles.locationNameText}>{item.locationName}</Text>
                             </View>
                         </View>
                     </View>
@@ -80,6 +95,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "flex-start",
         alignItems: "center",
+        marginBottom: 32,
     },
     userAvatar: {
         width: 60,

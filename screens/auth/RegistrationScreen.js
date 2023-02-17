@@ -12,33 +12,78 @@ import {
     Platform,
     Keyboard,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import * as ImagePicker from 'expo-image-picker';
+import { Feather } from '@expo/vector-icons';
 
+import { useDispatch } from 'react-redux';
 import { authSignUpUser } from "../../redux/auth/authOperations";
+
+import { storage } from "../../firebase/confige";
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 const initialState = {
     name: "",
     email: "",
     password: "",
+    avatar: "",
 };
 
 export default function RegistrationScreen ({navigation}) {
     const [isShowKeyboard, setIsShowKeyboard] = useState(false);
     const [isPasswordHidden, setIsPasswordHidden] = useState(true);
     const [user, setUser] = useState(initialState);
+    const [avatar, setAvatar] = useState("");
 
     const dispatch = useDispatch();
 
-    const handleSubmit = () => {
-        setIsShowKeyboard(false);
-        Keyboard.dismiss();
-
-        dispatch(authSignUpUser(user));
-        setUser(initialState);
-    };
-
     const onShowPassword = () => {
         setIsPasswordHidden(!isPasswordHidden);
+    };
+
+    const pickImageAvatar = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 1,
+        });
+        
+        if (!result.canceled) {
+            setAvatar(result.assets[0].uri);
+        }
+    };
+
+    const deleteImageAvatar = () => {
+        setAvatar(null);
+    };
+
+    const uploadImageAvatarToServer = async () => {
+        try {
+            const res = await fetch(avatar);
+            const file = await res.blob();
+
+            const uniqueAvatarId = Date.now().toString();
+            const storageRef = ref(storage, `avatarImages/${uniqueAvatarId}`);
+            await uploadBytes(storageRef, file);
+
+            const processedPhoto = await getDownloadURL(storageRef);
+            return processedPhoto;
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+    const handleSubmit = async () => {
+        try {
+            setIsShowKeyboard(false);
+            Keyboard.dismiss();
+
+            const avatarRef = await uploadImageAvatarToServer();
+            setUser((prevState) => ({ ...prevState, avatar: avatarRef }));
+            
+            dispatch(authSignUpUser(user));
+        } catch (error) {
+            console.log(error.message);
+        }
     };
 
     return (
@@ -49,9 +94,29 @@ export default function RegistrationScreen ({navigation}) {
                     style={styles.image}>
                     <View style={styles.formContainer}>
                         <View style={styles.userAvatar}>
-                            <TouchableOpacity activeOpacity={0.8} style={styles.addBtn}>
-                                <Image source={require("../../assets/images/add.png")} />
-                            </TouchableOpacity>
+                            {avatar && (
+                                <Image
+                                    style={styles.avatarImg}
+                                    source={{ uri: avatar }}
+                                />
+                            )}
+                            {avatar ? (
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    style={styles.closeBtn}
+                                    onPress={deleteImageAvatar}
+                                >
+                                    <Feather name="x-circle" size={27} color={"#BDBDBD"} />
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    style={styles.closeBtn}
+                                    onPress={pickImageAvatar}
+                                >
+                                    <Feather name="plus-circle" size={27} color={"#FF6C00"} />
+                                </TouchableOpacity>
+                            )}
                         </View>
                         <Text style={styles.pageTitle}>Реєстрація</Text>
                         <KeyboardAvoidingView
@@ -136,7 +201,7 @@ export default function RegistrationScreen ({navigation}) {
                 </ImageBackground>
             </View>
         </TouchableWithoutFeedback>
-    ); 
+    );
 };
 
 const styles = StyleSheet.create({
@@ -162,6 +227,17 @@ const styles = StyleSheet.create({
         height: 120,
         borderRadius: 16,
         backgroundColor: "#F6F6F6",
+    },
+    avatarImg: {
+        width: 120,
+        height: 120,
+        borderRadius: 16,
+        resizeMode: "cover",
+    },
+    closeBtn: {
+        position: "absolute",
+        bottom: 15,
+        right: -12.5,
     },
     addBtn: {
         position: "absolute",
