@@ -10,7 +10,6 @@ import {
     StyleSheet,
     Image,
     FlatList,
-    SafeAreaView,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
@@ -46,6 +45,7 @@ export default function CommentsScreen({route}) {
                 comment,
                 name,
                 userId,
+                avatar,
                 date,
                 time,
             });
@@ -80,13 +80,22 @@ export default function CommentsScreen({route}) {
                     style={{ display: isShowKeyboard ? "none" : "flex" }}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <View style={styles.commentBox}>
-                            <View style={styles.userAvatar}>
-                                <Image source={{ uri: avatar }} style={{ width: 28, height: 28, borderRadius: 15 }} />
+                        <View style={{
+                            ...styles.commentBox,
+                            flexDirection: userId === item.userId ? "row-reverse" : "row"}}>
+                            <View style={{
+                                ...styles.userAvatar,
+                                marginRight: userId === item.userId ? 0 : 16,
+                                marginLeft: userId === item.userId ? 16 : 0,
+                            }}>
+                                <Image source={{ uri: item.avatar }} style={{ width: 28, height: 28, borderRadius: 15 }} />
                             </View>
                             <View style={styles.commentWrapper}>
                                 <Text style={styles.textComment}>{item.comment}</Text>
-                                <Text style={styles.date}>{item.date} | {item.time}</Text>
+                                <Text style={{
+                                    ...styles.date,
+                                    textAlign: userId === item.userId ? "left" : "right",
+                                }}>{item.date} | {item.time}</Text>
                             </View>
                         </View>
                     )}
@@ -136,7 +145,10 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     userAvatar: {
-        marginRight: 16,
+        width: 28,
+        height: 28,
+        borderRadius: 15,
+        backgroundColor: "#F6F6F6",
     },
     commentWrapper: {
         flex: 1,
@@ -155,7 +167,6 @@ const styles = StyleSheet.create({
         fontFamily: "Roboto-Regular",
         fontSize: 10,
         lineHeight: 12,
-        textAlign: "right",
         color: "#BDBDBD",
     },
     input: {

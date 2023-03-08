@@ -4,7 +4,6 @@ import {
     StyleSheet,
     Text,
     View,
-    Image,
     ImageBackground,
     TextInput,
     TouchableOpacity,
@@ -12,132 +11,47 @@ import {
     Platform,
     Keyboard,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Feather } from '@expo/vector-icons';
 
 import { useDispatch } from 'react-redux';
-import { authSignUpUser } from "../../redux/auth/authOperations";
+import { authSignInUser } from "../../redux/auth/authOperations";
 
-import { storage } from "../../firebase/confige";
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 const initialState = {
-    name: "",
     email: "",
     password: "",
-    avatar: "",
 };
 
 export default function RegistrationScreen ({navigation}) {
     const [isShowKeyboard, setIsShowKeyboard] = useState(false);
     const [isPasswordHidden, setIsPasswordHidden] = useState(true);
     const [user, setUser] = useState(initialState);
-    const [avatar, setAvatar] = useState("");
 
     const dispatch = useDispatch();
 
+    const handleSubmit = () => {
+        setIsShowKeyboard(false);
+        Keyboard.dismiss();
+
+        dispatch(authSignInUser(user));
+        setUser(initialState);
+    };
+
     const onShowPassword = () => {
         setIsPasswordHidden(!isPasswordHidden);
-    };
-
-    const pickImageAvatar = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
-        });
-        
-        if (!result.canceled) {
-            setAvatar(result.assets[0].uri);
-        }
-    };
-
-    const deleteImageAvatar = () => {
-        setAvatar(null);
-    };
-
-    const uploadImageAvatarToServer = async () => {
-        try {
-            const res = await fetch(avatar);
-            const file = await res.blob();
-
-            const uniqueAvatarId = Date.now().toString();
-            const storageRef = ref(storage, `avatarImages/${uniqueAvatarId}`);
-            await uploadBytes(storageRef, file);
-
-            const processedPhoto = await getDownloadURL(storageRef);
-            return processedPhoto;
-        } catch (error) {
-            console.log(error.message);
-        }
-    };
-
-    const handleSubmit = async () => {
-        try {
-            setIsShowKeyboard(false);
-            Keyboard.dismiss();
-
-            const avatarRef = await uploadImageAvatarToServer();
-            setUser((prevState) => ({ ...prevState, avatar: avatarRef }));
-            
-            dispatch(authSignUpUser(user));
-        } catch (error) {
-            console.log(error.message);
-        }
     };
 
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View style={styles.container} >
                 <ImageBackground
-                    source={require("../../assets/images/bg.jpg")}
+                    source={require("../../../assets/images/bg.jpg")}
                     style={styles.image}>
                     <View style={styles.formContainer}>
-                        <View style={styles.userAvatar}>
-                            {avatar && (
-                                <Image
-                                    style={styles.avatarImg}
-                                    source={{ uri: avatar }}
-                                />
-                            )}
-                            {avatar ? (
-                                <TouchableOpacity
-                                    activeOpacity={0.8}
-                                    style={styles.closeBtn}
-                                    onPress={deleteImageAvatar}
-                                >
-                                    <Feather name="x-circle" size={27} color={"#BDBDBD"} />
-                                </TouchableOpacity>
-                            ) : (
-                                <TouchableOpacity
-                                    activeOpacity={0.8}
-                                    style={styles.closeBtn}
-                                    onPress={pickImageAvatar}
-                                >
-                                    <Feather name="plus-circle" size={27} color={"#FF6C00"} />
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                        <Text style={styles.pageTitle}>Реєстрація</Text>
+                        <Text style={styles.pageTitle}>Ввійти</Text>
                         <KeyboardAvoidingView
                             behavior={Platform.OS === "ios" ? "padding" : "height"}
                         >
-                            <View style={{ ...styles.form, marginBottom: isShowKeyboard ? -90 : 45 }}>
-                                <View style={{ marginBottom: 16 }}>
-                                    <TextInput
-                                        style={{
-                                            ...styles.input,
-                                            borderColor: isShowKeyboard ? "#FF6C00" : "#E8E8E8",
-                                            backgroundColor: isShowKeyboard ? "#FFFFFF" : "#F6F6F6",
-                                        }}
-                                        placeholder={"Логін"}
-                                        placeholderTextColor={"#BDBDBD"}
-                                        value={user.name}
-                                        onChangeText={(value) => setUser((prevState) => ({ ...prevState, name: value }))}
-                                        onFocus={() => setIsShowKeyboard(true)}
-                                        onBlur={() => setIsShowKeyboard(false)}
-                                    />
-                                </View>
+                            <View style={{ ...styles.form, marginBottom: isShowKeyboard ? -90 : 110 }}>
                                 <View style={{ marginBottom: 16 }}>
                                     <TextInput
                                         style={{
@@ -183,16 +97,15 @@ export default function RegistrationScreen ({navigation}) {
                                     style={styles.btn}
                                     onPress={handleSubmit}
                                 >
-                                    <Text style={styles.btnTitle}>Зареєструватися</Text>
+                                    <Text style={styles.btnTitle}>Ввійти</Text>
                                 </TouchableOpacity>
                                 <View style={styles.linkWrapper}>
-                                    <Text style={styles.linkText}>Вже є аккаунт? </Text>
+                                    <Text style={styles.linkText}>Відсутній аккаунт? </Text>
                                     <TouchableOpacity
-                                        onPress={() => navigation.navigate("Login")}
+                                        onPress={() => navigation.navigate("Registration")}
                                         activeOpacity={0.8}
-                                        style={styles.link}
-                                    >
-                                        <Text style={styles.linkText}>Ввійти</Text>
+                                        style={styles.link}>
+                                        <Text style={styles.linkText}>Зареєструватись</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -219,37 +132,12 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
     },
-    userAvatar: {
-        position: "absolute",
-        top: -60,
-        alignSelf: "center",
-        width: 120,
-        height: 120,
-        borderRadius: 16,
-        backgroundColor: "#F6F6F6",
-    },
-    avatarImg: {
-        width: 120,
-        height: 120,
-        borderRadius: 16,
-        resizeMode: "cover",
-    },
-    closeBtn: {
-        position: "absolute",
-        bottom: 15,
-        right: -12.5,
-    },
-    addBtn: {
-        position: "absolute",
-        bottom: 15,
-        right: -12.5,
-    },
     form: {
         marginHorizontal: 16,
     },
     pageTitle: {
         marginBottom: 32,
-        marginTop: 92,
+        marginTop: 32,
         marginLeft: "auto",
         marginRight: "auto",
         fontFamily: "Roboto-Medium",

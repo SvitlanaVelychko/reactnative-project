@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import PostScreen from '../screens/mainScreen/PostsScreen';
-import CreatePostsScreen from '../screens/mainScreen/CreatePostsScreen';
+import CreatePostsScreen from './mainScreen/CreatePostsScreen';
 import ProfileScreen from '../screens/mainScreen/ProfileScreen';
 
 const MainTab = createBottomTabNavigator();

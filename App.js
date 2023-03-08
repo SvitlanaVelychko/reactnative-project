@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from "expo-splash-screen";
 import { Provider } from 'react-redux';
-import { store } from './redux/store';
-import Main from './components/Main';
+import { store } from './src/redux/store';
+import Main from './src/components/Main';
 
 export default function App() {
   const [fontsLoaded] = useFonts({

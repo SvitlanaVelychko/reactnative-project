@@ -10,13 +10,21 @@ import {
 } from "react-native";
 
 import { db } from "../../firebase/confige";
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+    collection,
+    onSnapshot,
+    doc,
+    getDoc,
+    updateDoc,
+    arrayRemove,
+    arrayUnion,
+} from "firebase/firestore";
 import { useSelector } from "react-redux";
 
 export default function DefaultScreenPosts ({ navigation }) {
     const [posts, setPosts] = useState([]);
 
-    const { name, email, avatar } = useSelector((state)=> state.auth);
+    const { userId } = useSelector((state) => state.auth);
 
     useEffect(() => {
         getAllPosts();
@@ -34,23 +42,43 @@ export default function DefaultScreenPosts ({ navigation }) {
         }
     };
 
+    const toggleLikes = async (postId) => {
+        try {
+            const postRef = doc(db, "posts", postId);
+            const result = await getDoc(postRef);
+            const { likes } = result.data();
+
+            if (likes && likes.includes(userId)) {
+                await updateDoc(postRef, {
+                    likes: arrayRemove(userId)
+                });
+            }
+            else {
+                await updateDoc(postRef, {
+                    likes: arrayUnion(userId)
+                });
+            }
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <View style={styles.userWrapper}>
-                <View style={styles.userAvatar}>
-                    <Image source={{ uri: avatar }} style={{ width: 60, height: 60, borderRadius: 16 }} />
-                </View>
-                <View style={styles.userInfo}>
-                    <Text style={styles.userNameText}>{name}</Text>
-                    <Text style={styles.userEmailText}>{email}</Text>
-                </View>
-            </View>
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <View style={{ marginBottom: 32 }}>
+                        <View style={styles.userWrapper}>
+                            <View style={styles.userAvatar}>
+                                <Image source={{ uri: item.avatar }} style={{ width: 60, height: 60, borderRadius: 16 }} />
+                            </View>
+                            <View style={styles.userInfo}>
+                                <Text style={styles.userNameText}>{item.name}</Text>
+                                <Text style={styles.userEmailText}>{item.email}</Text>
+                            </View>
+                        </View>
                         <Image
                             source={{ uri: item.photo }}
                             style={{ width: "100%", height: 240, borderRadius: 8 }}
@@ -62,9 +90,26 @@ export default function DefaultScreenPosts ({ navigation }) {
                                     style={{ marginRight: 6 }}
                                     onPress={() => navigation.navigate("Comments", { photo: item.photo, postId: item.id })}
                                 >
-                                    <Feather name="message-circle" size={24} color={"#BDBDBD"} />
+                                    <Feather
+                                        name="message-circle"
+                                        size={24}
+                                        style={{color: item.comments ? "#FF6C00" : "#BDBDBD"}}
+                                    />
                                 </TouchableOpacity>
                                 <Text>{item.comments || 0}</Text>
+                            </View>
+                            <View style={styles.commentsWrapper}>
+                                <TouchableOpacity
+                                    style={{ marginRight: 6 }}
+                                    onPress={() => toggleLikes(item.id)}
+                                >
+                                    <Feather
+                                        name="thumbs-up"
+                                        size={24} 
+                                        style={{ color: item?.likes?.includes(userId) ? "#FF6C00" : "#BDBDBD" }}
+                                    />
+                                </TouchableOpacity>
+                                <Text>{item?.likes?.length || 0}</Text>
                             </View>
                             <View style={styles.locationWrapper}>
                                 <TouchableOpacity
@@ -89,7 +134,7 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         backgroundColor: "#FFFFFF",
         paddingHorizontal: 16,
-        paddingVertical: 32,
+        paddingTop: 32,
     },
     userWrapper: {
         flexDirection: "row",
@@ -129,14 +174,15 @@ const styles = StyleSheet.create({
     },
     postInfoWrapper: {
         flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
     },
     commentsWrapper: {
         flexDirection: "row",
+        marginRight: 24,
     },
     locationWrapper: {
         flexDirection: "row",
+        marginLeft: "auto",
     },
     locationNameText: {
         textDecorationLine: "underline",

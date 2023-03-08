@@ -50,8 +50,8 @@ export default function CreatePostsScreen({ navigation }) {
                 return;
             }
 
-            const location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
+            const locationRes = await Location.getCurrentPositionAsync({});
+            setLocation(locationRes);
         })();
     },[]);
     
