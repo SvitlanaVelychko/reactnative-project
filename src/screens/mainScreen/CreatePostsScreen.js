@@ -51,7 +51,7 @@ export default function CreatePostsScreen({ navigation }) {
             }
 
             const locationRes = await Location.getCurrentPositionAsync({});
-            setLocation(locationRes);
+            await setLocation(locationRes);
         })();
     },[]);
     

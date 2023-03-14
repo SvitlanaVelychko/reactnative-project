@@ -5,6 +5,7 @@ import {
     onAuthStateChanged,
     signOut,
 } from "firebase/auth";
+import { Alert } from "react-native";
 import { auth } from "../../firebase/confige";
 import { authSlice } from "./authReducer";
 
@@ -22,16 +23,31 @@ export const authSignUpUser = ({ name, email, password, avatar}) => async (
         });
 
         const { uid, displayName, photoURL } = await auth.currentUser;
+        
 
         dispatch(
-            updateUserProfile({ 
+            updateUserProfile({
                 userId: uid,
                 name: displayName,
-                email, 
+                email,
                 avatar: photoURL,
             }));
+        Alert.alert(`Wellcome, ${name}`);
     } catch (error) {
-        console.log(error.message);
+        const errorCode = error.code;
+
+        if (errorCode === 'auth/weak-password') {
+            Alert.alert('The password is too weak! Please, try another password!');
+        }
+        if (errorCode === 'auth/email-already-in-use') {
+            Alert.alert('Sorry, an account with such email already exists! Please login!');
+        }
+        if (errorCode === 'auth/invalid-email') {
+            Alert.alert('Email is not valid! Try another email!');
+        } else {
+            Alert.alert(error.message);
+        }
+        console.log(error);
     }
 };
 
@@ -40,7 +56,20 @@ export const authSignInUser = ({ email, password }) => async (
     try {
         const user = await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-        console.log(error.message);
+        const errorCode = error.code;
+
+        if (errorCode === 'auth/wrong-password') {
+            Alert.alert('Password is invalid! Please try again!');
+        }
+        if (errorCode === 'auth/user-not-found') {
+            Alert.alert('User with such email was not found!');
+        }
+        if (errorCode === 'auth/invalid-email') {
+            Alert.alert('Email is not valid! Please try another email!');
+        } else {
+            Alert.alert(error.message);
+        }
+        console.log(error);
     }
 };
 
@@ -51,7 +80,8 @@ export const authSignOutUser = () => async (dispatch, getState) => {
 
         dispatch(authSignOut());
     } catch (error) {
-        console.log(error.message);
+        Alert.alert(error.message);
+        console.log(error);
     }
 };
 
@@ -82,6 +112,7 @@ export const updateUserAvatar = (avatar) => async (dispatch, getState) => {
         const { photoURL } = auth.currentUser;
         dispatch(updateAvatar({ avatar: photoURL }));
     } catch (error) {
-        console.log(error.message);
+        Alert.alert('Something wrong! Please, try again!');
+        console.log(error);
     }
 };

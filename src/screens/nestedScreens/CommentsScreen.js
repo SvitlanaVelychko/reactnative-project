@@ -12,6 +12,8 @@ import {
     FlatList,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import moment from "moment";
+import 'moment/locale/uk';
 import { useSelector } from "react-redux";
 import { db } from "../../firebase/confige";
 import { addDoc, collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
@@ -21,7 +23,7 @@ export default function CommentsScreen({route}) {
     const [allComments, setAllComments] = useState([]);
     const [comment, setComment] = useState("");
 
-    const { photo, postId } = route.params;
+    const { photo, postId, postUserId } = route.params;
     const { name, userId, avatar } = useSelector((state) => state.auth);
 
     useEffect(() => {
@@ -33,14 +35,12 @@ export default function CommentsScreen({route}) {
         Keyboard.dismiss();
 
         try {
-            const date = new Date().toLocaleDateString();
-            const time = new Date().toLocaleTimeString();
+            moment.locale('uk');
+            const date = moment().format('DD MMMM YYYY');
+            const time = moment().format('HH:mm');
 
             const postRef = doc(db, "posts", postId);
-            await updateDoc(postRef, {
-                comments: allComments.length + 1,
-            });
-
+            
             await addDoc(collection(postRef, "comments"), {
                 comment,
                 name,
@@ -48,6 +48,10 @@ export default function CommentsScreen({route}) {
                 avatar,
                 date,
                 time,
+            });
+            
+            await updateDoc(postRef, {
+                comments: allComments.length + 1,
             });
 
             setComment("");
@@ -82,19 +86,21 @@ export default function CommentsScreen({route}) {
                     renderItem={({ item }) => (
                         <View style={{
                             ...styles.commentBox,
-                            flexDirection: userId === item.userId ? "row-reverse" : "row"}}>
-                            <View style={{
-                                ...styles.userAvatar,
-                                marginRight: userId === item.userId ? 0 : 16,
-                                marginLeft: userId === item.userId ? 16 : 0,
-                            }}>
+                            flexDirection: postUserId === item.userId ? "row-reverse" : "row"}}>
+                            <View style={styles.userAvatar}>
                                 <Image source={{ uri: item.avatar }} style={{ width: 28, height: 28, borderRadius: 15 }} />
                             </View>
-                            <View style={styles.commentWrapper}>
+                            <View style={{
+                                ...styles.commentWrapper,
+                                marginLeft: postUserId === item.userId ? 0 : 16,
+                                marginRight: postUserId === item.userId ? 16 : 0,
+                                borderTopRightRadius: postUserId === item.userId ? 0 : 6,
+                                borderTopLeftRadius: postUserId === item.userId ? 6 : 0,
+                            }}>
                                 <Text style={styles.textComment}>{item.comment}</Text>
                                 <Text style={{
                                     ...styles.date,
-                                    textAlign: userId === item.userId ? "left" : "right",
+                                    textAlign: postUserId === item.userId ? "left" : "right",
                                 }}>{item.date} | {item.time}</Text>
                             </View>
                         </View>

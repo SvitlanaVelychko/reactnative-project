@@ -88,7 +88,7 @@ export default function DefaultScreenPosts ({ navigation }) {
                             <View style={styles.commentsWrapper}>
                                 <TouchableOpacity
                                     style={{ marginRight: 6 }}
-                                    onPress={() => navigation.navigate("Comments", { photo: item.photo, postId: item.id })}
+                                    onPress={() => navigation.navigate("Comments", { photo: item.photo, postId: item.id, postUserId: item.userId })}
                                 >
                                     <Feather
                                         name="message-circle"
