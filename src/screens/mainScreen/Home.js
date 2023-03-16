@@ -2,9 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import PostScreen from '../screens/mainScreen/PostsScreen';
-import CreatePostsScreen from './mainScreen/CreatePostsScreen';
-import ProfileScreen from '../screens/mainScreen/ProfileScreen';
+import PostScreen from './PostsScreen';
+import CreatePostsScreen from './CreatePostsScreen';
+import ProfileScreen from './ProfileScreen';
 
 const MainTab = createBottomTabNavigator();
 

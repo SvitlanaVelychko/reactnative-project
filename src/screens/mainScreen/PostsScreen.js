@@ -10,7 +10,7 @@ import { useDispatch } from "react-redux";
 
 const NestedStack = createStackNavigator();
 
-export default function PostsScreen({ navigation }) {
+export default function PostsScreen() {
     const dispatch = useDispatch();
 
     return (

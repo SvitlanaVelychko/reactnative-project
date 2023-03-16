@@ -65,7 +65,7 @@ export default function CommentsScreen({route}) {
             const postRef = doc(db, "posts", postId);
 
             onSnapshot(collection(postRef, "comments"), (data) => {
-                setAllComments(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+                setAllComments(data.docs.map((doc) => ({ ...doc.data()})));
             });
         } catch (error) {
             console.log(error.message);
@@ -82,7 +82,7 @@ export default function CommentsScreen({route}) {
                 <FlatList
                     data={allComments}
                     style={{ display: isShowKeyboard ? "none" : "flex" }}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={allComments.id}
                     renderItem={({ item }) => (
                         <View style={{
                             ...styles.commentBox,

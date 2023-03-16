@@ -14,11 +14,12 @@ import {
 } from "react-native";
 import { Camera } from "expo-camera";
 import * as Location from 'expo-location';
-import * as ImagePicker from 'expo-image-picker';
 
-import { storage, db } from '../../firebase/confige';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { db } from '../../firebase/confige';
 import { collection, addDoc } from "firebase/firestore"; 
+
+import { pickImage } from '../../utils/pickImage';
+import { uploadImageToServer } from '../../utils/uploadImageToServer';
 
 export default function CreatePostsScreen({ navigation }) {
     const [isShowKeyboard, setIsShowKeyboard] = useState(false);
@@ -64,41 +65,17 @@ export default function CreatePostsScreen({ navigation }) {
         };
     };
 
-    const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-        
-        if (!result.canceled) {
-            setPhoto(result.assets[0].uri);
-        }
-    };
-
-    const uploadPhotoToServer = async () => {
-        try {
-            const res = await fetch(photo);
-            const file = await res.blob();
-
-            const uniquePostId = Date.now().toString();
-            const storageRef = ref(storage, `postImages/${uniquePostId}`);
-            await uploadBytes(storageRef, file);
-
-            const processedPhoto = await getDownloadURL(storageRef);
-            return processedPhoto;
-        } catch (error) {
-            console.log(error.message);
-        }
+    const pickImageFromGallery = async () => {
+        const imagePath = await pickImage();
+        setPhoto(imagePath);
     };
 
     const uploadPostToServer = async () => {
         try {
-            const photo = await uploadPhotoToServer();
+            const photoURL = await uploadImageToServer(photo, 'postImages');
             
             await addDoc(collection(db, "posts"), {
-                photo,
+                photo: photoURL,
                 photoTitle,
                 location,
                 locationName,
@@ -161,7 +138,7 @@ export default function CreatePostsScreen({ navigation }) {
                             <TouchableOpacity
                                 style={{ marginTop: 8 }}
                                 activeOpacity={0.8}
-                                onPress={pickImage}
+                                onPress={pickImageFromGallery}
                             >
                                 <Text style={styles.uploadPhotoText}>
                                     {photo ? "Редагувати фото" : "Завантажити фото"}</Text>
@@ -209,8 +186,12 @@ export default function CreatePostsScreen({ navigation }) {
                                     ? "#FFFFFF" : "#BDBDBD",
                             }}>Опублікувати</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.deleteBtn} onPress={reset}>
-                            <Feather name="trash-2" size={24} color="#BDBDBD" />
+                        <TouchableOpacity
+                            style={{...styles.deleteBtn, backgroundColor: photo ? "#FF6C00" : "#F6F6F6"}}
+                            onPress={reset}
+                            activeOpacity={0.8}
+                        >
+                            <Feather name="trash-2" size={24} color={photo ? "#FFFFFF" : "#BDBDBD"} />
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
@@ -287,7 +268,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         borderRadius: 20,
-        backgroundColor: "#F6F6F6",
         marginLeft: "auto",
         marginRight: "auto",
         marginTop: 120,

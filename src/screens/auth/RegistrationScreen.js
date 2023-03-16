@@ -12,14 +12,13 @@ import {
     Platform,
     Keyboard,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 
 import { useDispatch } from 'react-redux';
-import { authSignUpUser } from "../../redux/auth/authOperations";
+import { authSignUpUser, updateUserAvatar } from "../../redux/auth/authOperations";
 
-import { storage } from "../../firebase/confige";
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { pickImage } from '../../utils/pickImage';
+import { uploadImageToServer } from '../../utils/uploadImageToServer';
 
 const initialState = {
     name: "",
@@ -41,51 +40,25 @@ export default function RegistrationScreen ({navigation}) {
     };
 
     const pickImageAvatar = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
-        });
-        
-        if (!result.canceled) {
-            setAvatar(result.assets[0].uri);
-        }
+        const imagePath = await pickImage();
+        setAvatar(imagePath);
     };
 
     const deleteImageAvatar = () => {
         setAvatar(null);
     };
 
-    const uploadImageAvatarToServer = async () => {
-        try {
-            const res = await fetch(avatar);
-            const file = await res.blob();
 
-            const uniqueAvatarId = Date.now().toString();
-            const storageRef = ref(storage, `avatarImages/${uniqueAvatarId}`);
-            await uploadBytes(storageRef, file);
-
-            const processedPhoto = await getDownloadURL(storageRef);
-            return processedPhoto;
-        } catch (error) {
-            console.log(error.message);
-        }
-    };
-
+    
     const handleSubmit = async () => {
         try {
             setIsShowKeyboard(false);
             Keyboard.dismiss();
 
-            const photoUrl = await uploadImageAvatarToServer();
-            const newUser = {
-                avatar: photoUrl,
-                name: user.name,
-                email: user.email,
-                password: user.password,
-            };
-            
-            await dispatch(authSignUpUser(newUser));
+            await dispatch(authSignUpUser(user));
+
+            const photoURL = await uploadImageToServer(avatar, 'avatarImages');
+            await dispatch(updateUserAvatar(photoURL));
             setUser(initialState);
         } catch (error) {
             console.log(error.message);

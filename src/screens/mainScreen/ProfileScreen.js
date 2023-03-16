@@ -8,14 +8,16 @@ import {
     Text,
     FlatList,
 } from "react-native";
-import * as ImagePicker from 'expo-image-picker';
 import { Feather } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { authSignOutUser, updateUserAvatar } from "../../redux/auth/authOperations";
 
 import { db, storage } from '../../firebase/confige';
 import { onSnapshot, query, collection, where, deleteDoc, doc, getDocs, setDoc } from "firebase/firestore";
-import { deleteObject, ref, getDownloadURL, uploadBytes } from "firebase/storage";
+import { deleteObject, ref } from "firebase/storage";
+
+import { pickImage } from "../../utils/pickImage";
+import { uploadImageToServer } from "../../utils/uploadImageToServer";
 
 
 export default function ProfileScreen({ navigation }) {
@@ -42,45 +44,22 @@ export default function ProfileScreen({ navigation }) {
     };
 
     const pickImageAvatar = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
-        });
-        
-        if (!result.canceled) {
-            setUpdatedAvatar(result.assets[0].uri);
-        }
+        const imagePath = await pickImage();
+        setUpdatedAvatar(imagePath);
         return updatedAvatar;
-    };
-
-    const uploadImageAvatarToServer = async () => {
-        try {
-            const res = await fetch(updatedAvatar);
-            const file = await res.blob();
-
-            const uniqueAvatarId = Date.now().toString();
-            const storageRef = ref(storage, `avatarImages/${uniqueAvatarId}`);
-            await uploadBytes(storageRef, file);
-
-            const photo = await getDownloadURL(storageRef);
-            return photo;
-        } catch (error) {
-            console.log(error.message);
-        }
     };
 
     const updateImageAvatar = async () => {
         try {
-            const photoUrl = await uploadImageAvatarToServer();
-            await dispatch(updateUserAvatar(photoUrl));
+            const photoURL = await uploadImageToServer(updatedAvatar, 'avatarImages');
+            await dispatch(updateUserAvatar(photoURL));
             setUpdatedAvatar('');
 
             const postImageRef = query(collection(db, 'posts'), where('userId', '==', userId));
             const querySnapshot = await getDocs(postImageRef);
             querySnapshot.forEach((doc) => {
                 setDoc(doc.ref, {
-                    avatar: photoUrl
+                    avatar: photoURL
                 }, { merge: true })
             });
         } catch (error) {
@@ -96,9 +75,9 @@ export default function ProfileScreen({ navigation }) {
         await dispatch(updateUserAvatar(updatedAvatar));
     };
 
-    const deletePost = async (postId, photoUrl) => {
+    const deletePost = async (postId, photoURL) => {
         try {
-            const postImageRef = ref(storage, photoUrl);
+            const postImageRef = ref(storage, photoURL);
     
             await deleteDoc(doc(db, "posts", postId));
             await deleteObject(postImageRef);
