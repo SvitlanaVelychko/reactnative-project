@@ -9,7 +9,7 @@ import { Alert } from "react-native";
 import { auth } from "../../firebase/confige";
 import { authSlice } from "./authReducer";
 
-const { updateUserProfile, authStateChange, authSignOut, updateAvatar } = authSlice.actions;
+const { updateUserProfile, authStateChange, authSignOut } = authSlice.actions;
 
 export const authSignUpUser = ({ name, email, password, avatar}) => async (
     dispatch,
@@ -109,8 +109,13 @@ export const updateUserAvatar = (avatar) => async (dispatch, getState) => {
             photoURL: avatar,
         });
 
-        const { photoURL } = auth.currentUser;
-        dispatch(updateAvatar({ avatar: photoURL }));
+        const { uid, displayName, email, photoURL } = auth.currentUser;
+        dispatch(updateUserProfile({
+            userId: uid,
+            name: displayName,
+            email: email,
+            avatar: photoURL,
+        }));
     } catch (error) {
         Alert.alert('Something wrong! Please, try again!');
         console.log(error);
