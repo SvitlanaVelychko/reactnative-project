@@ -4,4 +4,4 @@ Blog application was created with React Native and Firebase
 
 To show use Expo-go
 
-https://github.com/SvitlanaVelychko/reactnative-project/blob/master/assets/images/expo-go.svg
+http://www.w3.org/2000/svg
